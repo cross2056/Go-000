@@ -34,9 +34,9 @@ func receiveSignal(ctx context.Context) error {
 	signal.Notify(signch, syscall.SIGINT, syscall.SIGKILL, syscall.SIGUSR1, syscall.SIGUSR2, syscall.SIGTERM)
 	select {
 	case s := <-signch:
-		return fmt.Errorf("Terminated by signal %s", s)
+		return fmt.Errorf("Terminate via signal %s", s)
 	case <-ctx.Done():
-		fmt.Printf("Close signal monitor\n")
+		fmt.Printf("Close signal listener\n")
 		return nil
 	}
 }
@@ -45,10 +45,10 @@ func startServer(ctx context.Context, server *http.Server) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			fmt.Printf("Stop service %s\n", server.Addr)
+			fmt.Printf("Stop server %s\n", server.Addr)
 			server.Shutdown(context.TODO())
 		}
 	}()
-	fmt.Printf("Start service %s\n", server.Addr)
+	fmt.Printf("Start server %s\n", server.Addr)
 	return server.ListenAndServe()
 }
