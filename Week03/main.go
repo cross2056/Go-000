@@ -18,11 +18,11 @@ func main() {
 	})
 
 	g.Go(func() error {
-		return startService(ctx, &http.Server{Addr: ":9001"})
+		return startServer(ctx, &http.Server{Addr: ":9001"})
 	})
 
 	g.Go(func() error {
-		return startService(ctx, &http.Server{Addr: ":9002"})
+		return startServer(ctx, &http.Server{Addr: ":9002"})
 	})
 
 	fmt.Println(g.Wait())
@@ -41,7 +41,7 @@ func receiveSignal(ctx context.Context) error {
 	}
 }
 
-func startService(ctx context.Context, server *http.Server) error {
+func startServer(ctx context.Context, server *http.Server) error {
 	go func() {
 		select {
 		case <-ctx.Done():
