@@ -12,20 +12,20 @@ import (
 )
 
 func main() {
-	group, errCtx := errgroup.WithContext(context.Background())
-	group.Go(func() error {
-		return receiveSignal(errCtx)
+	g, ctx := errgroup.WithContext(context.Background())
+	g.Go(func() error {
+		return receiveSignal(ctx)
 	})
 
-	group.Go(func() error {
-		return startService(errCtx, &http.Server{Addr: ":9001"})
+	g.Go(func() error {
+		return startService(ctx, &http.Server{Addr: ":9001"})
 	})
 
-	group.Go(func() error {
-		return startService(errCtx, &http.Server{Addr: ":9002"})
+	g.Go(func() error {
+		return startService(ctx, &http.Server{Addr: ":9002"})
 	})
 
-	fmt.Println(group.Wait())
+	fmt.Println(g.Wait())
 }
 
 func receiveSignal(ctx context.Context) error {
