@@ -12,19 +12,17 @@ import (
 )
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	group, errCtx := errgroup.WithContext(ctx)
-
+	group, errCtx := errgroup.WithContext(context.Background())
 	group.Go(func() error {
-		return receiveSignal(errCtx, cancel)
+		return receiveSignal(errCtx)
 	})
 
 	group.Go(func() error {
-		return startService(errCtx, group, cancel, &http.Server{Addr: ":9001"})
+		return startService(errCtx, &http.Server{Addr: ":9001"})
 	})
 
 	group.Go(func() error {
-		return startService(errCtx, group, cancel, &http.Server{Addr: ":9002"})
+		return startService(errCtx, &http.Server{Addr: ":9002"})
 	})
 
 	if err := group.Wait(); err != nil {
@@ -32,30 +30,27 @@ func main() {
 	}
 }
 
-func receiveSignal(ctx context.Context, cancel context.CancelFunc) error {
+func receiveSignal(ctx context.Context) error {
 	signch := make(chan os.Signal)
 	defer close(signch)
 	signal.Notify(signch, syscall.SIGINT, syscall.SIGKILL, syscall.SIGUSR1, syscall.SIGUSR2, syscall.SIGTERM)
 	select {
 	case s := <-signch:
-		fmt.Printf("Got an exit signal %s\n", s)
-		cancel()
-		return nil
+		return fmt.Errorf("Terminated by signal %s", s)
 	case <-ctx.Done():
 		fmt.Printf("Close signal monitor\n")
 		return nil
 	}
 }
 
-func startService(ctx context.Context, group *errgroup.Group, cancel context.CancelFunc, server *http.Server) error {
-	defer cancel()
-	group.Go(func() error {
+func startService(ctx context.Context, server *http.Server) error {
+	go func() {
 		select {
 		case <-ctx.Done():
-			fmt.Printf("stop service %s\n", server.Addr)
-			return server.Shutdown(context.TODO())
+			fmt.Printf("Stop service %s\n", server.Addr)
+			server.Shutdown(context.TODO())
 		}
-	})
-	fmt.Printf("start service %s\n", server.Addr)
+	}()
+	fmt.Printf("Start service %s\n", server.Addr)
 	return server.ListenAndServe()
 }
