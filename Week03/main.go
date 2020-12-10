@@ -25,9 +25,7 @@ func main() {
 		return startService(errCtx, &http.Server{Addr: ":9002"})
 	})
 
-	if err := group.Wait(); err != nil {
-		fmt.Printf(err.Error())
-	}
+	fmt.Println(group.Wait())
 }
 
 func receiveSignal(ctx context.Context) error {
